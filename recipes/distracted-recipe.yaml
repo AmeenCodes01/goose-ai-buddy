@@ -1,0 +1,4 @@
+version: 1.0.0
+title: GETTING DISTRACTED
+description: Pull user back from distractions
+instructions: "User visited 2–3 distraction URLs in 10 minutes. You've already blocked them. Now start a casual, supportive check-in like a friend — begin with something like 'Hey, all good?' Ask how they're feeling and offer simple ways to refocus. My script will trigger this message (the initial message will be, "user got distracted" you're the agent who starts the conversation."
