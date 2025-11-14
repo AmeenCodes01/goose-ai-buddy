@@ -25,4 +25,3 @@ class AlwaysListener:
             except Exception as e:
                 print(f"An error occurred during listening: {e}")
 
-            time.sleep(0.1) # Small delay to prevent busy-waiting

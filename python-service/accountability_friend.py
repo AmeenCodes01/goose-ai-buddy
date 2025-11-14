@@ -12,7 +12,7 @@ from typing import List, Dict, Callable, Optional
 
 # Assuming these are in the same python-service directory
 from goose_integration import GooseClient
-from voice_interaction import VoiceInteraction
+from voice_interaction import VoiceInteraction,SpeakText
 # SimpleScheduler is removed as per instruction
 
 logger = logging.getLogger(__name__)
@@ -146,15 +146,15 @@ class ConversationManager:
         self._start_new_conversation_log() # Start a new log for this conversation
         self._log_turn("GOOSE", initial_message)
         print("--- Accountability Conversation Started ---")
-        self.voice.speak(initial_message)
+        SpeakText(initial_message)
         print("Say 'quit', 'exit', 'goodbye', or 'summarize' to manage the conversation.")
 
         while True:
             print("Inside while loop of COnvoManager")
-            if self.DEBUG_TEXT_INPUT_ENABLED and not self.voice.tts_engine: # Fallback for dev if voice fails
+            if self.DEBUG_TEXT_INPUT_ENABLED: # Fallback for dev if voice fails
                  user_input = input("YOU (TEXT DEBUG): ").strip()
                  if user_input.lower() == "voice": # Allow switching to voice if engine works
-                     self.voice.speak("Switching to voice mode. Please speak now.")
+                     SpeakText("Switching to voice mode. Please speak now.")
                      user_input = self.voice.listen()
                  elif not user_input: # If empty text input, try voice
                      user_input = self.voice.listen()
@@ -162,11 +162,11 @@ class ConversationManager:
                 user_input = self.voice.listen()
                 print(f"user input: {user_input}")
             if user_input is None:
-                self.voice.speak("I didn't quite catch that. Could you please repeat?")
+                SpeakText("I didn't quite catch that. Could you please repeat?")
                 continue
 
             user_input_lower = user_input.lower()
-            self._log_turn("USER", user_input)
+            self._log_turn("USER: -----", user_input)
             
             # if any(word in user_input_lower for word in ['quit', 'exit', 'goodbye', 'all set', 'done']):
             #     final_message = "Okay, sounds good! Remember, I'm here to help you stay focused whenever you need me. Take care!"
@@ -183,7 +183,7 @@ class ConversationManager:
             
             self._log_turn("GOOSE", goose_response)
             print(goose_response," goose about to speak")
-            self.voice.speak(goose_response)
+            SpeakText(goose_response)
 
             # Timer intent detection and scheduling call removed from here
 

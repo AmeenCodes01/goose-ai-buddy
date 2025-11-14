@@ -65,11 +65,12 @@ def health_check():
 @app.route('/analyze-distraction', methods=['POST'])
 def analyze_distraction():
     """Analyze if URL is a distraction using Goose, trigger intervention if needed"""
+    print("endpoint hit")
     try:
         data = request.get_json() or {}
         url = data.get('url', '')
         title = data.get('title', '')
-        
+        print("result:  ", request)
         if not url:
             return jsonify({"status": "error", "message": "URL is required"}), 400
         
@@ -77,7 +78,7 @@ def analyze_distraction():
         
         # Call the tracker to log distraction and get intervention message/flag
         # tracker.log_distraction internally calls Goose for analysis
-        intervention_message, should_speak = tracker.log_distraction(url, title)
+        intervention_message = tracker.log_distraction(url, title)
         
         # Prepare response data based on tracker's internal analysis
         # `is_distraction` is true if an intervention message was generated (meaning Goose flagged it)
@@ -97,14 +98,12 @@ def analyze_distraction():
             response_data["action"] = "close_tab" # Browser extension interprets this as redirect now
             logger.info(f"🚫 Distraction detected - instructing to redirect tab: {url}")
             
-            if should_speak and intervention_message: 
-                print("🤖 Intervention needed! Starting voice conversation...")
-                # Start the voice conversation loop with Goose's intervention message
-                conversation_manager.start_accountability_conversation(initial_message=intervention_message)
+           
 
         return jsonify(response_data)
         
     except Exception as e:
+        print(data, "request")
         logger.error(f"❌ Error analyzing distraction: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -118,7 +117,8 @@ def main():
     listener = AlwaysListener(voice_interaction_instance=voice, conversation_manager_instance=conversation_manager)
     wake_word_thread = threading.Thread(target=listener.start_listening, daemon=True)
     wake_word_thread.start()
-    logger.info("👂 Always-listening for wake word ('hey goose')...")
+    # listener.start_listening()
+    # logger.info("👂 Always-listening for wake word ('hey goose')...")
 
     try:
         app.run(host='localhost', port=5000, debug=True, use_reloader=False) 

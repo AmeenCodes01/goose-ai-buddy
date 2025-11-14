@@ -1,0 +1,4 @@
+title: Timed Hello Message
+description: Sends a 'Hello' message at a specific time.
+messages:
+- Hello

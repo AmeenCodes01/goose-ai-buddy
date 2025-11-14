@@ -371,7 +371,7 @@ class GooseClient:
             GooseError: If task execution fails
         """
         try:
-            args = ["run"]
+            args = ["run","--output-format","json"]
             
             if instructions:
                 args.extend(["-t", instructions])
