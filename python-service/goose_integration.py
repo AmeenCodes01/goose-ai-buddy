@@ -56,7 +56,7 @@ class GooseClient:
         sessions = client.list_sessions()
         result = client.run_task("Analyze the logs in /var/log/app.log")
     """
-    
+    today_session_name = "daily_session_2025-11-14" 
     def __init__(self, goose_command: str = "goose", logger: Optional[logging.Logger] = None):
         """
         Initialize the Goose client.
@@ -67,7 +67,11 @@ class GooseClient:
         """
         self.goose_command = goose_command
         self.logger = logger or self._setup_logger()
+        self.active_session_id: Optional[str] = None # Stores the ID of the currently active Goose CLI session
+        self.active_session_id: Optional[str] = None # Stores the ID of the currently active Goose CLI session
+        self.active_session_id: Optional[str] = None # Stores the ID of the currently active Goose CLI session
         
+        self.active_session_id: Optional[str] = None # Stores the ID of the currently active Goose CLI session
         # Verify goose is available
         try:
             self._run_command(["--version"], timeout=10)
@@ -240,10 +244,11 @@ class GooseClient:
             Use run_task() to execute commands in the session.
         """
         try:
-            args = ["session"]
-            
+            #we're going by name for now
+            args = ["run"]
             if name:
                 args.extend(["-n", name])
+           
             if resume:
                 args.append("--resume")
             if session_id:
@@ -251,9 +256,11 @@ class GooseClient:
             if extensions:
                 for ext in extensions:
                     args.extend(["--with-builtin", ext])
-            
+            args.extend(["-t","hello"])
             args.extend(["--max-turns", str(max_turns)])
-            
+            print(args, " argss--")
+            result = self._run_command(args)
+            return result.stdout
             # We'll use run command instead for non-interactive execution
             return {"message": "Use run_task() method for executing commands programmatically"}
             
@@ -373,16 +380,19 @@ class GooseClient:
         try:
             args = ["run","--output-format","json"]
             
+            if session_name:
+                args.extend(["-n", session_name])
+            elif self.today_session_name:
+                args.extend(["-n", self.today_session_name, "-r"])
+            
             if instructions:
                 args.extend(["-t", instructions])
             elif instructions_file:
                 args.extend(["-i", instructions_file])
             else:
                 raise GooseError("Must provide either instructions or instructions_file")
-            
-            if session_name:
-                args.extend(["-n", session_name])
-            
+                
+                
             if extensions:
                 for ext in extensions:
                     args.extend(["--with-builtin", ext])
@@ -400,9 +410,15 @@ class GooseClient:
             
             result = self._run_command(args, timeout=600)  # Longer timeout for tasks
             
+            result = result.stdout.decode("utf-8")
+            json_start = result.find('{')
+            json_str = result[json_start:]
+
+            # Step 3: Parse the JSON
+            data = json.loads(json_str)
             return {
                 "success": True,
-                "output": result.stdout,
+                "output": data["messages"][-1]["content"][0]["text"],
                 "timestamp": datetime.now().isoformat()
             }
             
@@ -958,44 +974,50 @@ if __name__ == "__main__":
         # Initialize client
         client = GooseClient()
         
-        # Get system info
-        print("=== System Info ===")
-        info = client.get_system_info()
-        print(info.get('output', 'No info available'))
+        # # Get system info
+        # print("=== System Info ===")
+        # info = client.get_system_info()
+        # print(info.get('output', 'No info available'))
         
+        # # List sessions
+        # print("\n=== Sessions ===")
+        # try:
+        #     sessions = client.list_sessions()
+        #     print(f"Found {len(sessions)} sessions")
+        #     for session in sessions[:3]:  # Show first 3
+        #         print(f"  - {session}")
+        # except Exception as e:
+        #print(f"Error listing sessions: {e}")
         # List sessions
-        print("\n=== Sessions ===")
-        try:
-            sessions = client.list_sessions()
-            print(f"Found {len(sessions)} sessions")
-            for session in sessions[:3]:  # Show first 3
-                print(f"  - {session}")
-        except Exception as e:
-            print(f"Error listing sessions: {e}")
+        # print("\n=== Sessions ===")
+        # try:
+        #     result = client.start_session()
+        #     print(result)
+        # except Exception as e:
+        #     print(f"Error listing sessions: {e}")
         
-        # List recipes
-        print("\n=== Recipes ===")
-        try:
-            recipes = client.list_recipes()
-            print(f"Found {len(recipes)} recipes")
-            for recipe in recipes[:3]:  # Show first 3
-                print(f"  - {recipe}")
-        except Exception as e:
-            print(f"Error listing recipes: {e}")
+        # # List recipes
+        # print("\n=== Recipes ===")
+        # try:
+        #     recipes = client.list_recipes()
+        #     print(f"Found {len(recipes)} recipes")
+        #     for recipe in recipes[:3]:  # Show first 3
+        #         print(f"  - {recipe}")
+        # except Exception as e:
+        #     print(f"Error listing recipes: {e}")
         
         # Run a simple task
         print("\n=== Running Task ===")
         result = client.run_task(
             instructions="What's the current date and time?",
             extensions=["developer"],
-            no_session=True
         )
         print(f"Task result: {result}")
         
-        # Quick task example
-        print("\n=== Quick Task ===")
-        quick_result = quick_task("List the files in the current directory")
-        print(f"Quick task result: {quick_result}")
+        # # Quick task example
+        # print("\n=== Quick Task ===")
+        # quick_result = quick_task("List the files in the current directory")
+        # print(f"Quick task result: {quick_result}")
     
     async def async_main():
         """Example async usage."""

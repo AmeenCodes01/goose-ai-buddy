@@ -88,7 +88,7 @@ class VoiceInteraction:
     # -------------------------------------------------------------------------
     # STT
     # -------------------------------------------------------------------------
-    def listen(self, timeout: int = 10, phrase_time_limit: int = 10):
+    def listen(self, timeout: int = 15, phrase_time_limit: int = 15):
         """Listen from mic and return recognized text."""
         try:
             self.microphone = sr.Microphone()

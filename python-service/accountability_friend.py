@@ -25,7 +25,7 @@ class ConversationManager:
     """
 
     CONVERSATION_LOG_DIR = "conversation_logs"
-    DEBUG_TEXT_INPUT_ENABLED = True # Set to False for production (voice-only)
+    DEBUG_TEXT_INPUT_ENABLED = False # Set to False for production (voice-only)
 
     def __init__(self, voice_interaction_instance: Optional[VoiceInteraction] = None):
         self.goose_client = GooseClient()
@@ -86,7 +86,6 @@ class ConversationManager:
             result = self.goose_client.run_task(
                 instructions=user_input,
                 extensions=["developer"], # Assuming developer extension is useful for context
-                no_session=True, # For shorter, isolated turns in conversation
                 max_turns=1 # One turn at a time for interactive conversation
             )
             if result.get('success'):
@@ -161,8 +160,8 @@ class ConversationManager:
             else:
                 user_input = self.voice.listen()
                 print(f"user input: {user_input}")
-            if user_input is None:
-                SpeakText("I didn't quite catch that. Could you please repeat?")
+            if user_input is None or not user_input.strip():
+                # print("[CONVERSATION] No significant speech detected, waiting for user input...")
                 continue
 
             user_input_lower = user_input.lower()

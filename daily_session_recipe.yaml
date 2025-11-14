@@ -1,0 +1,6 @@
+name: Daily Goose Session Management
+title: Manages daily Goose session creation and reuse.
+description: This recipe ensures a unique Goose session is established and reused for each day, tracking session IDs in a file.
+steps:
+  - tool: developer__shell
+    command: python goose_session_manager.py

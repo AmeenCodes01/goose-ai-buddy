@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 from typing import List, Dict, Optional
 from goose_integration import GooseClient
-
+from voice_interaction import VoiceInteraction,SpeakText
 
 class DistractionTracker:
     """
@@ -20,13 +20,12 @@ class DistractionTracker:
     - Simple logging via print statements
     """
     instruction_path = "C:/Users/User/productivity-buddy/recipes/distracted-instructions.txt"
-
     def __init__(self):
         """Initialize the distraction tracker."""
         self.distractions: List[Dict] = []
         self.goose_client = GooseClient()
         self.detection_window = 600  # 10 minutes in seconds
-        self.intervention_threshold = 2  # 2+ distractions triggers intervention
+        self.intervention_threshold = 1  # 2+ distractions triggers intervention
 
         print("DistractionTracker initialized")
 
@@ -38,7 +37,7 @@ class DistractionTracker:
             url: The URL that was accessed
             title: The title/description of the distraction
         """
-        print("url recieved for logging ", url)
+        print("url recieved for analysing ", url)
         timestamp = time.time()
         distraction = {
             'url': url,
@@ -46,6 +45,10 @@ class DistractionTracker:
             'timestamp': timestamp,
             'datetime': datetime.fromtimestamp(timestamp).isoformat()
         }
+
+       
+        
+
 
         # Deduplicate: avoid logging same URL within detection window
         cutoff = timestamp - self.detection_window
@@ -88,12 +91,13 @@ class DistractionTracker:
             result = self.goose_client.run_task(
                 instructions_file=self.instruction_path,
                 extensions=["developer"],
-                no_session=True,
+                no_session=False,
                 max_turns=3
             )
-
+            
             if result.get('success'):
                 response = result.get('output', 'Intervention completed')
+                SpeakText(response)
                 print(f"[SUCCESS] Intervention completed: {response[:100]}...")
                 return response
             else:

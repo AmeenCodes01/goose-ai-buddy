@@ -61,6 +61,7 @@ function startAnalysisTimer(tabId, url, title) {
  * @param {string} url - The URL to analyze.
  * @param {string} title - The title of the page.
  */
+
 async function analyzeUrl(tabId, url, title) {
   console.log(`🧠 Sending to backend for analysis: ${url}`);
   try {

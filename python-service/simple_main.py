@@ -26,6 +26,7 @@ CORS(app)
 # Global components
 tracker = DistractionTracker()
 voice = VoiceInteraction()
+goose = GooseClient()
 # ConversationManager needs the global voice instance
 conversation_manager = ConversationManager(voice_interaction_instance=voice) 
 
@@ -70,19 +71,31 @@ def analyze_distraction():
         data = request.get_json() or {}
         url = data.get('url', '')
         title = data.get('title', '')
+        
         print("result:  ", request)
         if not url:
             return jsonify({"status": "error", "message": "URL is required"}), 400
+       
+        result = goose.run_task(
+                instructions=f"REPLY with only YES or NO. Is this URL {url} a distraction or not for user who's studying/working. ",
+                extensions=["developer"],
+                no_session=False,
+                max_turns=3
+            )
+
+        print(result.get("output",""), ": result")
+        is_distraction = "YES" == result.get("output","")
+        
+            
         
         logger.info(f"🧠 Analyzing URL for distraction: {url}")
         
+         
         # Call the tracker to log distraction and get intervention message/flag
         # tracker.log_distraction internally calls Goose for analysis
-        intervention_message = tracker.log_distraction(url, title)
-        
+        tracker.log_distraction(url,title=title)
         # Prepare response data based on tracker's internal analysis
         # `is_distraction` is true if an intervention message was generated (meaning Goose flagged it)
-        is_distraction = (intervention_message is not None)
 
         response_data = {
             "status": "analyzed",
