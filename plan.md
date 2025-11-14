@@ -30,9 +30,10 @@ I’ll handle testing and feedback. Just write the code.
 
 
 before executing, tell on how you plan to do this both
+    (it executed in main chat,smh)
 
-( it executed in main chat,smh)
-
+Create Agent (Wi-Fi Scan): Run locally on the user's laptop. Scan nearby Wi-Fi SSIDs for keywords like 'Train', 'Bus', or 'Station'. If a match is found, call the tool goose with the instruction: 'user heading to train station'." 
+    (this was through gemini CLI sorry, I had hit rate limit in goose & gemini CLI wasn't being configured as provider ://)
 
 
 

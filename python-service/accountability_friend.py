@@ -167,16 +167,16 @@ class ConversationManager:
             user_input_lower = user_input.lower()
             self._log_turn("USER: -----", user_input)
             
-            # if any(word in user_input_lower for word in ['quit', 'exit', 'goodbye', 'all set', 'done']):
-            #     final_message = "Okay, sounds good! Remember, I'm here to help you stay focused whenever you need me. Take care!"
-            #     self.voice.speak(final_message)
-            #     self._log_turn("GOOSE", final_message)
-            #     break
-            # elif "summarize conversation" in user_input_lower or "summarize our chat" in user_input_lower:
-            #     summary = self.summarize_conversation()
-            #     self.voice.speak(summary)
-            #     self._log_turn("GOOSE", summary)
-            #     continue
+            if any(word in user_input_lower for word in ['quit', 'exit', 'goodbye', 'all set', 'done']):
+                final_message = "Okay, sounds good! Remember, I'm here to help you stay focused whenever you need me. Take care!"
+                self.voice.speak(final_message)
+                self._log_turn("GOOSE", final_message)
+                break
+            elif "summarize conversation" in user_input_lower or "summarize our chat" in user_input_lower:
+                summary = self.summarize_conversation()
+                self.voice.speak(summary)
+                self._log_turn("GOOSE", summary)
+                continue
             
             goose_response = self._get_goose_response(user_input)
             

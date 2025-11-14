@@ -8,6 +8,10 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from goose_integration import GooseClient
 from voice_interaction import VoiceInteraction,SpeakText
+import logging
+logger = logging.getLogger(__name__)
+
+
 
 class DistractionTracker:
     """
@@ -16,7 +20,7 @@ class DistractionTracker:
     Features:
     - Track distraction events with timestamps
     - Detect when intervention is needed (2+ distractions in 10 minutes)
-    - Trigger Goose-based interventions
+- Trigger Goose-based interventions
     - Simple logging via print statements
     """
     instruction_path = "C:/Users/User/productivity-buddy/recipes/distracted-instructions.txt"
@@ -127,6 +131,15 @@ class DistractionTracker:
             'in_cooldown': False,
             'cooldown_remaining': 0
         }
+
+    def trigger_url_analysis(self):
+        """
+        Triggers a URL analysis, typically from a gesture.
+        This simulates a browser event for a generic "distraction" to initiate Goose analysis.
+        """
+        logger.info("Gesture-triggered URL analysis initiated.")
+        # Use a dummy URL/title to trigger the existing distraction analysis flow
+        self.log_distraction(url="gesture://analysis_trigger", title="Gesture Triggered Analysis")
 
 
 # Example usage and testing
