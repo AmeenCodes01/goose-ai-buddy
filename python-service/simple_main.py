@@ -97,6 +97,21 @@ def analyze_distraction():
         print("result:  ", request)
         if not url:
             return jsonify({"status": "error", "message": "URL is required"}), 400
+
+        # Always log the distraction, regardless of analysis status
+        tracker.log_distraction(url, title=title)
+
+        # Check if analysis is enabled before calling Goose
+        if not tracker.analysis_enabled:
+            logger.info(f"🧠 Distraction analysis is currently DISABLED. Skipping Goose for URL: {url}")
+            return jsonify({
+                "status": "analysis_disabled",
+                "url": url,
+                "title": title,
+                "is_distraction": False, # Assume not a distraction if analysis is off
+                "analysis": "DISABLED",
+                "timestamp": datetime.now().isoformat()
+            })
        
         result = goose.run_task(
                 instructions=f"REPLY with only YES or NO. Is this URL {url} a distraction or not for user who's studying/working. ",
@@ -108,14 +123,8 @@ def analyze_distraction():
         print(result.get("output",""), ": result")
         is_distraction = "YES" == result.get("output","")
         
-            
-        
         logger.info(f"🧠 Analyzing URL for distraction: {url}")
         
-         
-        # Call the tracker to log distraction and get intervention message/flag
-        # tracker.log_distraction internally calls Goose for analysis
-        tracker.log_distraction(url,title=title)
         # Prepare response data based on tracker's internal analysis
         # `is_distraction` is true if an intervention message was generated (meaning Goose flagged it)
 
@@ -133,8 +142,6 @@ def analyze_distraction():
             response_data["action"] = "close_tab" # Browser extension interprets this as redirect now
             logger.info(f"🚫 Distraction detected - instructing to redirect tab: {url}")
             
-           
-
         return jsonify(response_data)
         
     except Exception as e:
@@ -187,11 +194,14 @@ def main():
     wake_word_thread.start()
     logger.info("👂 Always-listening for wake word ('hey goose')...")
 
-    # Initialize GestureRecognizer and pass the callback
-    # recognizer = GestureRecognizer(url_analysis_callback=tracker.trigger_url_analysis)
-    # gesture_thread = threading.Thread(target=recognizer.start_recognition, daemon=True)
-    # gesture_thread.start()
-    # logger.info("👋 Gesture recognition started.")
+    # Initialize GestureRecognizer and register callbacks for toggling analysis
+    recognizer = GestureRecognizer()
+    recognizer.register_gesture_callback("open", tracker.disable_analysis)
+    recognizer.register_gesture_callback("closed", tracker.enable_analysis)
+    
+    gesture_thread = threading.Thread(target=recognizer.start_recognition, daemon=True)
+    gesture_thread.start()
+    logger.info("👋 Gesture recognition started. (Open Fist = Disable Analysis, Closed Fist = Enable Analysis)")
 
     # Start the Wi-Fi scanner agent in a separate thread
     wifi_thread = threading.Thread(target=wifi_scanner_agent_loop, args=(handle_station_event,), daemon=True)

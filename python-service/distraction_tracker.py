@@ -30,17 +30,33 @@ class DistractionTracker:
         self.goose_client = GooseClient()
         self.detection_window = 600  # 10 minutes in seconds
         self.intervention_threshold = 1  # 2+ distractions triggers intervention
+        self.analysis_enabled = True  # State flag for toggling analysis
 
         print("DistractionTracker initialized")
 
+    def enable_analysis(self):
+        """Enable distraction analysis."""
+        if not self.analysis_enabled:
+            self.analysis_enabled = True
+            print("✅ Distraction analysis has been ENABLED.")
+            SpeakText("Distraction analysis enabled.")
+
+    def disable_analysis(self):
+        """Disable distraction analysis."""
+        if self.analysis_enabled:
+            self.analysis_enabled = False
+            print("❌ Distraction analysis has been DISABLED.")
+            SpeakText("Distraction analysis disabled.")
+
     def log_distraction(self, url: str, title: str) -> Optional[str]:
         """
-        Log a distraction event with timestamp.
-
-        Args:
-            url: The URL that was accessed
-            title: The title/description of the distraction
+        Log a distraction event and trigger intervention if analysis is enabled.
         """
+        # If analysis is disabled, do nothing.
+        if not self.analysis_enabled:
+            print(f"[SKIPPED] Analysis is disabled. Ignoring URL: {url}")
+            return None
+
         print("url recieved for analysing ", url)
         timestamp = time.time()
         distraction = {
