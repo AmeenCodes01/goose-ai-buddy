@@ -102,6 +102,7 @@ def analyze_distraction():
         tracker.log_distraction(url, title=title)
 
         # Check if analysis is enabled before calling Goose
+        print(tracker.analysis_enabled, "enabled")
         if not tracker.analysis_enabled:
             logger.info(f"🧠 Distraction analysis is currently DISABLED. Skipping Goose for URL: {url}")
             return jsonify({
@@ -121,8 +122,8 @@ def analyze_distraction():
             )
 
         print(result.get("output",""), ": result")
-        is_distraction = "YES" == result.get("output","")
-        
+        is_distraction = "YES" in result.get("output","")
+        print("YES" in result.get("output"), " ttttt")
         logger.info(f"🧠 Analyzing URL for distraction: {url}")
         
         # Prepare response data based on tracker's internal analysis
@@ -173,7 +174,7 @@ def handle_station_event(ssid):
 
 def main():
     """Main application entry point"""
-    # --- Admin Privilege Check ---
+   # --- Admin Privilege Check ---
     if not is_admin():
         print("Admin privileges are required for Wi-Fi scanning.")
         success = request_admin_privileges()
@@ -196,14 +197,14 @@ def main():
 
     # Initialize GestureRecognizer and register callbacks for toggling analysis
     recognizer = GestureRecognizer()
-    recognizer.register_gesture_callback("open", tracker.disable_analysis)
-    recognizer.register_gesture_callback("closed", tracker.enable_analysis)
+    recognizer.register_gesture_callback("thumbs_up", tracker.enable_analysis)
+    recognizer.register_gesture_callback("peace", tracker.disable_analysis)
     
     gesture_thread = threading.Thread(target=recognizer.start_recognition, daemon=True)
     gesture_thread.start()
-    logger.info("👋 Gesture recognition started. (Open Fist = Disable Analysis, Closed Fist = Enable Analysis)")
+    logger.info("👋 Gesture recognition started. (Thumbs Up = Enable Analysis, Peace Sign = Disable Analysis)")
 
-    # Start the Wi-Fi scanner agent in a separate thread
+    #Start the Wi-Fi scanner agent in a separate thread
     wifi_thread = threading.Thread(target=wifi_scanner_agent_loop, args=(handle_station_event,), daemon=True)
     wifi_thread.start()
 

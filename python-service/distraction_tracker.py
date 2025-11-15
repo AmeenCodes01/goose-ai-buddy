@@ -57,7 +57,6 @@ class DistractionTracker:
             print(f"[SKIPPED] Analysis is disabled. Ignoring URL: {url}")
             return None
 
-        print("url recieved for analysing ", url)
         timestamp = time.time()
         distraction = {
             'url': url,
@@ -66,19 +65,13 @@ class DistractionTracker:
             'datetime': datetime.fromtimestamp(timestamp).isoformat()
         }
 
-       
-        
-
-
         # Deduplicate: avoid logging same URL within detection window
         cutoff = timestamp - self.detection_window
         if not any(d['url'] == url and d['timestamp'] > cutoff for d in self.distractions):
             self.distractions.append(distraction)
-            print("_-----------------------------------------------------------")
-            print(f"[DISTRACTION] {title} - {url} at {distraction['datetime']}")
-            print("_-----------------------------------------------------------")
+            print(f"[LOGGED] {title} - {url}")
         else:
-            print(f"[SKIPPED] Duplicate distraction ignored: {title} - {url}")
+            print(f"[SKIPPED LOG] Duplicate distraction ignored: {title} - {url}")
 
         # Check if intervention is needed
         response = None

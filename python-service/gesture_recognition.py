@@ -1,10 +1,13 @@
+"""
+Gesture Recognition Module (Rewritten for Simplicity and Reliability)
+Uses MediaPipe for hand tracking and gesture detection.
+"""
+
 import cv2
 import mediapipe as mp
-import numpy as np
 import logging
 import threading
 import time
-from datetime import datetime
 from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
@@ -29,7 +32,7 @@ class GestureRecognizer:
         self.last_gesture_time = {}
         
     def start_recognition(self):
-        """Start the gesture recognition loop"""
+        """Start the gesture recognition loop."""
         self.running = True
         
         try:
@@ -38,95 +41,107 @@ class GestureRecognizer:
                 logger.error("❌ Cannot open camera")
                 return
                 
-            logger.info("📹 Camera opened successfully")
+            logger.info("📹 Camera opened successfully. Press 'q' in the window to quit.")
             
             while self.running:
                 ret, frame = self.cap.read()
                 if not ret:
-                    logger.warning("⚠️ Failed to read frame")
+                    time.sleep(0.1)
                     continue
                 
-                # Flip frame horizontally for mirror effect
                 frame = cv2.flip(frame, 1)
-                
-                # Convert BGR to RGB
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                
-                # Process the frame
                 results = self.hands.process(rgb_frame)
                 
-                # Detect gestures
                 gesture = self._detect_gesture(results)
                 if gesture:
                     self._handle_gesture(gesture)
                 
-                # Draw hand landmarks
                 if results.multi_hand_landmarks:
                     for hand_landmarks in results.multi_hand_landmarks:
                         self.mp_drawing.draw_landmarks(
-                            frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS
-                        )
+                            frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
                 
-                # Display the frame
-                cv2.imshow('Productivity Buddy - Gesture Recognition', frame)
+                cv2.imshow('Gesture Recognition', frame)
                 
-                # Exit on 'q' key
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
                     
         except Exception as e:
-            logger.error(f"❌ Error in gesture recognition: {e}")
+            logger.error(f"❌ Error in gesture recognition loop: {e}")
         finally:
             self.stop()
     
-    def _detect_gesture(self, results):
-        """Detect specific gestures from hand landmarks"""
+    def _detect_gesture(self, results) -> Optional[str]:
+        """Detects a gesture from the hand landmarks."""
         if not results.multi_hand_landmarks:
             return None
             
         for hand_landmarks in results.multi_hand_landmarks:
-            # Detect different gestures
-            gesture = self._classify_hand_gesture(hand_landmarks)
-            if gesture:
-                return gesture
+            return self._classify_hand_gesture(hand_landmarks)
         
         return None
     
-    def _classify_hand_gesture(self, hand_landmarks):
-        """Classify the hand gesture based on landmarks into 'open' or 'closed'."""
+    def _classify_hand_gesture(self, hand_landmarks) -> Optional[str]:
+        """
+        Classifies the hand gesture using a simple and reliable finger-counting method.
+        """
         try:
             landmarks = hand_landmarks.landmark
             
-            # Get the y-coordinates of fingertips and their corresponding MCP joints
-            index_tip_y = landmarks[self.mp_hands.HandLandmark.INDEX_FINGER_TIP].y
-            index_mcp_y = landmarks[self.mp_hands.HandLandmark.INDEX_FINGER_MCP].y
-            middle_tip_y = landmarks[self.mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y
-            middle_mcp_y = landmarks[self.mp_hands.HandLandmark.MIDDLE_FINGER_MCP].y
-            ring_tip_y = landmarks[self.mp_hands.HandLandmark.RING_FINGER_TIP].y
-            ring_mcp_y = landmarks[self.mp_hands.HandLandmark.RING_FINGER_MCP].y
-            pinky_tip_y = landmarks[self.mp_hands.HandLandmark.PINKY_TIP].y
-            pinky_mcp_y = landmarks[self.mp_hands.HandLandmark.PINKY_MCP].y
+            # This list will hold a boolean for each finger [Thumb, Index, Middle, Ring, Pinky]
+            fingers_up = []
 
-            # An open hand has fingertips above (lower y-value) the base of the fingers
-            is_open = (index_tip_y < index_mcp_y and
-                       middle_tip_y < middle_mcp_y and
-                       ring_tip_y < ring_mcp_y and
-                       pinky_tip_y < pinky_mcp_y)
+            # --- Thumb ---
+            # A common robust check is to see if the thumb tip's X-coordinate is further
+            # out than its IP joint's X-coordinate (assuming a vertical right hand).
+            # This helps distinguish a thumbs-up from a closed fist where the thumb is tucked in.
+            # We get the handedness to make this work for both left and right hands.
+            hand_label = "left" # Placeholder
+            # Note: handedness detection is not perfectly reliable, but we can try.
+            # A simpler check is just comparing y-coordinates, which we'll use for consistency.
+            if landmarks[self.mp_hands.HandLandmark.THUMB_TIP].y < landmarks[self.mp_hands.HandLandmark.THUMB_IP].y:
+                fingers_up.append(True)
+            else:
+                fingers_up.append(False)
 
-            # A closed hand has fingertips below (higher y-value) the base
-            is_closed = (index_tip_y > index_mcp_y and
-                         middle_tip_y > middle_mcp_y)
+            # --- Other 4 Fingers ---
+            # A finger is "up" if its tip is above its PIP joint (the middle joint).
+            finger_tip_indices = [8, 12, 16, 20]
+            finger_pip_indices = [6, 10, 14, 18]
 
-            if is_open:
+            for i in range(4):
+                if landmarks[finger_tip_indices[i]].y < landmarks[finger_pip_indices[i]].y:
+                    fingers_up.append(True)
+                else:
+                    fingers_up.append(False)
+
+            # --- Gesture Matching ---
+            # Now we match the boolean list to our desired gestures.
+            
+            # Thumbs Up: [True, False, False, False, False]
+            if fingers_up == [True, False, False, False, False]:
+                return "thumbs_up"
+            
+            # Peace Sign: [False, True, True, False, False]
+            if fingers_up == [False, True, True, False, False]:
+                return "peace"
+            
+            # Open Hand: All five fingers are up
+            if all(fingers_up):
                 return "open"
-            elif is_closed:
+            
+            # Closed Fist: No fingers are up
+            if not any(fingers_up):
                 return "closed"
+
         except Exception:
             return None
+        
         return None
-
+    
     def _handle_gesture(self, gesture: str):
-        """Handle a detected gesture, checking cooldowns and triggering callbacks."""
+        """Handles a detected gesture, checking cooldowns and triggering callbacks."""
         current_time = time.time()
         
         if current_time - self.last_gesture_time.get(gesture, 0) > self.gesture_cooldown:
@@ -138,22 +153,16 @@ class GestureRecognizer:
                     self.gesture_callbacks[gesture]()
                 except Exception as e:
                     logger.error(f"❌ Error in gesture callback for '{gesture}': {e}")
-
-    def register_gesture_callback(self, gesture, callback):
-        """Register a callback for a specific gesture"""
-        self.gesture_callbacks[gesture] = callback
-        logger.info(f"📝 Registered callback for gesture: {gesture}")
     
-    def get_latest_gesture(self):
-        """Get the latest detected gesture"""
-        gesture = self.latest_gesture
-        self.latest_gesture = None  # Clear after reading
-        return gesture
+    def register_gesture_callback(self, gesture: str, callback: Callable):
+        """Registers a callback function for a specific gesture."""
+        self.gesture_callbacks[gesture] = callback
+        logger.info(f"📝 Registered callback for gesture: '{gesture}'")
     
     def stop(self):
-        """Stop the gesture recognition"""
+        """Stops the recognition loop and releases resources."""
         self.running = False
         if self.cap:
             self.cap.release()
         cv2.destroyAllWindows()
-        logger.info("🛑 Gesture recognition stopped")
+        logger.info("🛑 Gesture recognition stopped.")
