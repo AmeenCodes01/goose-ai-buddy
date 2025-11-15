@@ -29,7 +29,7 @@ class DistractionTracker:
         self.distractions: List[Dict] = []
         self.goose_client = GooseClient()
         self.detection_window = 600  # 10 minutes in seconds
-        self.intervention_threshold = 1  # 2+ distractions triggers intervention
+        self.intervention_threshold = 2  # 2+ distractions triggers intervention
         self.analysis_enabled = True  # State flag for toggling analysis
 
         print("DistractionTracker initialized")

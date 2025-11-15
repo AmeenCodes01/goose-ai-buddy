@@ -197,12 +197,12 @@ def main():
 
     # Initialize GestureRecognizer and register callbacks for toggling analysis
     recognizer = GestureRecognizer()
-    recognizer.register_gesture_callback("thumbs_up", tracker.enable_analysis)
-    recognizer.register_gesture_callback("peace", tracker.disable_analysis)
+    recognizer.register_gesture_callback("closed", tracker.enable_analysis)
+    recognizer.register_gesture_callback("open", tracker.disable_analysis)
     
     gesture_thread = threading.Thread(target=recognizer.start_recognition, daemon=True)
     gesture_thread.start()
-    logger.info("👋 Gesture recognition started. (Thumbs Up = Enable Analysis, Peace Sign = Disable Analysis)")
+    logger.info("👋 Gesture recognition started. (Closed Fist = Enable Analysis, Open Hand = Disable Analysis)")
 
     #Start the Wi-Fi scanner agent in a separate thread
     wifi_thread = threading.Thread(target=wifi_scanner_agent_loop, args=(handle_station_event,), daemon=True)
